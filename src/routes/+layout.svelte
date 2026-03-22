@@ -5,8 +5,8 @@
 </script>
 
 <svelte:head>
+	<title>OKLCH</title>
 	<link rel="icon" href={favicon} />
-	<link rel="title" href="OKLCH" />
 </svelte:head>
 
 {@render children()}
