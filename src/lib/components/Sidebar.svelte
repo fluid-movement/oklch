@@ -2,7 +2,7 @@
 	import { paletteStore } from '$lib/palette.svelte';
 	import type { Palette } from '$lib/palette.svelte';
 	import { oklchToHex } from '$lib/colors';
-	import { Plus, Copy, Trash2, PanelLeftClose, PanelLeftOpen } from 'lucide-svelte';
+	import { Plus, Copy, Trash2, PanelLeftClose, PanelLeftOpen, Link } from 'lucide-svelte';
 
 	interface Props {
 		open: boolean;
@@ -14,6 +14,7 @@
 	let editingId = $state<string | null>(null);
 	let editingName = $state('');
 	let editInputEl = $state<HTMLInputElement | null>(null);
+	let copiedId = $state<string | null>(null);
 
 	let isEmpty = $derived(paletteStore.palettes.length === 0);
 
@@ -34,6 +35,15 @@
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Enter') commitEdit();
 		if (e.key === 'Escape') editingId = null;
+	}
+
+	async function sharePalette(palette: Palette, e: MouseEvent) {
+		e.stopPropagation();
+		const encoded = btoa(JSON.stringify({ id: palette.id, name: palette.name, colors: palette.colors }));
+		const url = `${window.location.origin}${window.location.pathname}?palette=${encoded}`;
+		await navigator.clipboard.writeText(url);
+		copiedId = palette.id;
+		setTimeout(() => (copiedId = null), 1500);
 	}
 </script>
 
@@ -128,6 +138,15 @@
 								title="Duplicate"
 							>
 								<Copy size={13} />
+							</button>
+							<button
+								class="action-btn"
+								class:link-copied={copiedId === palette.id}
+								onclick={(e) => sharePalette(palette, e)}
+								aria-label="Copy share link"
+								title={copiedId === palette.id ? 'Link copied!' : 'Share link'}
+							>
+								<Link size={13} />
 							</button>
 							<button
 								class="action-btn danger"
@@ -367,5 +386,9 @@
 	.action-btn.danger:hover {
 		color: rgba(220, 80, 80, 0.9);
 		background: rgba(220, 80, 80, 0.1);
+	}
+
+	.action-btn.link-copied {
+		color: rgba(100, 210, 120, 0.9);
 	}
 </style>

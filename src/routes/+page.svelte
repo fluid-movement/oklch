@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import type { OklchColor } from '$lib/colors';
 	import type { PaletteColor } from '$lib/palette.svelte';
 	import { getSuggestions } from '$lib/colors';
@@ -8,9 +9,40 @@
 	import ColorSuggestions from '$lib/components/ColorSuggestions.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
+	type PendingImport = { id: string; name: string; colors: PaletteColor[] };
+
 	let selectedIndex = $state(0);
 	let sidebarOpen = $state(true);
 	let suggestionHoverColor = $state<OklchColor | null>(null);
+	let pendingImport = $state<PendingImport | null>(null);
+
+	onMount(() => {
+		const params = new URLSearchParams(window.location.search);
+		const encoded = params.get('palette');
+		if (encoded) {
+			try {
+				const data: PendingImport = JSON.parse(atob(encoded));
+				if (data?.id && data?.name && Array.isArray(data?.colors)) {
+					const existing = paletteStore.palettes.find((p) => p.id === data.id);
+					if (!existing) {
+						paletteStore.importShared(data);
+					} else if (
+						existing.name === data.name &&
+						JSON.stringify(existing.colors) === JSON.stringify(data.colors)
+					) {
+						paletteStore.setActive(data.id);
+					} else {
+						pendingImport = data;
+					}
+				}
+			} catch {
+				// ignore invalid links
+			}
+			const url = new URL(window.location.href);
+			url.searchParams.delete('palette');
+			history.replaceState({}, '', url);
+		}
+	});
 
 	// Reset selection when active palette switches
 	$effect(() => {
@@ -104,6 +136,39 @@
 	});
 </script>
 
+{#if pendingImport}
+	<div class="modal-backdrop" onclick={() => (pendingImport = null)} role="presentation">
+		<div class="modal" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+			<p class="modal-title">Palette already exists</p>
+			<p class="modal-body">
+				"{pendingImport.name}" is in your collection but has different colors. What would you like
+				to do?
+			</p>
+			<div class="modal-actions">
+				<button
+					class="modal-btn"
+					onclick={() => {
+						paletteStore.updateShared(pendingImport!.id, pendingImport!);
+						pendingImport = null;
+					}}
+				>
+					Update existing
+				</button>
+				<button
+					class="modal-btn"
+					onclick={() => {
+						paletteStore.importSharedAsNew(pendingImport!);
+						pendingImport = null;
+					}}
+				>
+					Import as new copy
+				</button>
+				<button class="modal-btn cancel" onclick={() => (pendingImport = null)}>Cancel</button>
+			</div>
+		</div>
+	</div>
+{/if}
+
 <div class="app-layout">
 	<Sidebar open={sidebarOpen} onToggle={toggleSidebar} />
 
@@ -187,5 +252,83 @@
 		justify-content: center;
 		color: rgba(255, 255, 255, 0.2);
 		font-size: 14px;
+	}
+
+	.modal-backdrop {
+		position: fixed;
+		inset: 0;
+		background: rgba(0, 0, 0, 0.6);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 1000;
+	}
+
+	.modal {
+		background: #1e1e1e;
+		border: 1px solid rgba(255, 255, 255, 0.12);
+		border-radius: 12px;
+		padding: 24px;
+		width: 340px;
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+		box-shadow: 0 16px 48px rgba(0, 0, 0, 0.6);
+	}
+
+	.modal-title {
+		font-size: 14px;
+		font-weight: 600;
+		color: rgba(255, 255, 255, 0.9);
+		margin: 0;
+	}
+
+	.modal-body {
+		font-size: 13px;
+		color: rgba(255, 255, 255, 0.5);
+		line-height: 1.5;
+		margin: 0;
+	}
+
+	.modal-actions {
+		display: flex;
+		flex-direction: column;
+		gap: 6px;
+		margin-top: 4px;
+	}
+
+	.modal-btn {
+		width: 100%;
+		padding: 9px 14px;
+		border-radius: 6px;
+		font-size: 13px;
+		font-family: inherit;
+		cursor: pointer;
+		text-align: left;
+		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.06);
+		color: rgba(255, 255, 255, 0.75);
+		transition:
+			background 0.15s,
+			border-color 0.15s,
+			color 0.15s;
+	}
+
+	.modal-btn:hover {
+		background: rgba(255, 255, 255, 0.1);
+		border-color: rgba(255, 255, 255, 0.2);
+		color: white;
+	}
+
+	.modal-btn.cancel {
+		color: rgba(255, 255, 255, 0.3);
+		background: transparent;
+		border-color: transparent;
+	}
+
+	.modal-btn.cancel:hover {
+		color: rgba(255, 255, 255, 0.5);
+		background: transparent;
+		border-color: transparent;
 	}
 </style>

@@ -101,6 +101,26 @@ function createStore() {
 		persist();
 	}
 
+	function importShared(data: { id: string; name: string; colors: PaletteColor[] }) {
+		const palette: Palette = { id: data.id, name: data.name, colors: data.colors, createdAt: Date.now() };
+		palettes = [...palettes, palette];
+		activeId = palette.id;
+		persist();
+	}
+
+	function importSharedAsNew(data: { name: string; colors: PaletteColor[] }) {
+		const palette: Palette = { id: crypto.randomUUID(), name: data.name, colors: data.colors, createdAt: Date.now() };
+		palettes = [...palettes, palette];
+		activeId = palette.id;
+		persist();
+	}
+
+	function updateShared(id: string, patch: { name: string; colors: PaletteColor[] }) {
+		palettes = palettes.map((p) => (p.id === id ? { ...p, ...patch } : p));
+		activeId = id;
+		persist();
+	}
+
 	return {
 		get palettes() {
 			return palettes;
@@ -116,7 +136,10 @@ function createStore() {
 		remove,
 		setActive,
 		updateActive,
-		update
+		update,
+		importShared,
+		importSharedAsNew,
+		updateShared
 	};
 }
 
