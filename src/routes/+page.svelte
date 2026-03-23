@@ -11,6 +11,7 @@
 	import PreviewPanel from '$lib/components/PreviewPanel.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 	import AppToolbar from '$lib/components/AppToolbar.svelte';
+	import RoleAssignment from '$lib/components/RoleAssignment.svelte';
 
 	type ScreenType = 'saas' | 'blog' | 'dashboard';
 	type FontKey = 'business' | 'modern' | 'playful' | 'mono';
@@ -316,10 +317,15 @@
 			/>
 			<div class="content-grid">
 				<div class="editor-col">
-					<ColorEditor color={colors[selectedIndex]} onUpdate={updateColor} onDragStart={handleDragStart} />
+					<div class="role-strip">
+						<RoleAssignment palette={paletteStore.active} onRoleChange={updateRoles} />
+					</div>
+					<div class="editor-inner">
+						<ColorEditor color={colors[selectedIndex]} onUpdate={updateColor} onDragStart={handleDragStart} />
+					</div>
 				</div>
 				<div class="preview-col">
-					<PreviewPanel palette={paletteStore.active} onRoleChange={updateRoles} {screenType} {fontFamily} />
+					<PreviewPanel palette={paletteStore.active} {screenType} {fontFamily} />
 				</div>
 			</div>
 		{:else}
@@ -373,8 +379,20 @@
 
 	.editor-col {
 		overflow-y: auto;
-		padding: 32px;
+		display: flex;
+		flex-direction: column;
 		border-right: 1px solid rgba(255, 255, 255, 0.06);
+	}
+
+	.role-strip {
+		padding: 16px 20px 14px;
+		border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+		flex-shrink: 0;
+	}
+
+	.editor-inner {
+		padding: 28px 32px 32px;
+		flex: 1;
 	}
 
 	.preview-col {

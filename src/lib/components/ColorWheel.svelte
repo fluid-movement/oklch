@@ -8,15 +8,15 @@
 		previewColors?: OklchColor[] | null;
 		dimCurrentColors?: boolean;
 		fixedL: number;
+		size?: number;
 	}
 
-	let { currentColors, previewColors = null, dimCurrentColors = false, fixedL }: Props = $props();
+	let { currentColors, previewColors = null, dimCurrentColors = false, fixedL, size = 180 }: Props = $props();
 
-	const SIZE = 180;
-	const CENTER = SIZE / 2;
-	// Chroma 0 → r=8 (near center), chroma 0.37 → r=83 (near outer edge)
-	const DOT_R_MIN = 8;
-	const DOT_R_MAX = 83;
+	const CENTER = $derived(size / 2);
+	// Chroma 0 → r≈4.4% of size (near center), chroma 0.37 → r≈46% of size (near outer edge)
+	const DOT_R_MIN = $derived(size * 0.044);
+	const DOT_R_MAX = $derived(size * 0.461);
 
 	let canvasEl = $state<HTMLCanvasElement | null>(null);
 
@@ -32,11 +32,11 @@
 		if (!ctx) return;
 
 		const l = fixedL;
-		const imageData = ctx.createImageData(SIZE, SIZE);
+		const imageData = ctx.createImageData(size, size);
 		const { data } = imageData;
 
-		for (let y = 0; y < SIZE; y++) {
-			for (let x = 0; x < SIZE; x++) {
+		for (let y = 0; y < size; y++) {
+			for (let x = 0; x < size; x++) {
 				const dx = x - CENTER;
 				const dy = y - CENTER;
 				const dist = Math.hypot(dx, dy);
@@ -47,7 +47,7 @@
 				const hex = formatHex({ mode: 'oklch', l, c, h });
 				if (!hex) continue;
 
-				const idx = (y * SIZE + x) * 4;
+				const idx = (y * size + x) * 4;
 				data[idx] = parseInt(hex.slice(1, 3), 16);
 				data[idx + 1] = parseInt(hex.slice(3, 5), 16);
 				data[idx + 2] = parseInt(hex.slice(5, 7), 16);
@@ -66,13 +66,13 @@
 	});
 </script>
 
-<div class="wheel-wrap">
-	<canvas bind:this={canvasEl} width={SIZE} height={SIZE} class="wheel-canvas"></canvas>
+<div class="wheel-wrap" style="width: {size}px; height: {size}px;">
+	<canvas bind:this={canvasEl} width={size} height={size} class="wheel-canvas"></canvas>
 	<svg
 		class="wheel-svg"
-		viewBox="0 0 {SIZE} {SIZE}"
-		width={SIZE}
-		height={SIZE}
+		viewBox="0 0 {size} {size}"
+		width={size}
+		height={size}
 		aria-label="Color wheel"
 		role="img"
 	>
@@ -115,8 +115,6 @@
 <style>
 	.wheel-wrap {
 		position: relative;
-		width: 180px;
-		height: 180px;
 		flex-shrink: 0;
 	}
 

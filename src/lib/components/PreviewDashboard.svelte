@@ -104,6 +104,55 @@
         </div>
       </div>
 
+      <!-- Chart + table row -->
+      <div class="mid-row">
+        <!-- Bar chart -->
+        <div class="chart-section">
+          <div class="chart-header">
+            <span class="chart-title">Revenue</span>
+            <span class="chart-period">Last 7 months</span>
+          </div>
+          <div class="bar-chart">
+            <div class="bar-col"><div class="bar" style="height:42%"></div><span class="bar-label">Sep</span></div>
+            <div class="bar-col"><div class="bar" style="height:58%"></div><span class="bar-label">Oct</span></div>
+            <div class="bar-col"><div class="bar" style="height:51%"></div><span class="bar-label">Nov</span></div>
+            <div class="bar-col"><div class="bar" style="height:73%"></div><span class="bar-label">Dec</span></div>
+            <div class="bar-col"><div class="bar" style="height:65%"></div><span class="bar-label">Jan</span></div>
+            <div class="bar-col"><div class="bar" style="height:80%"></div><span class="bar-label">Feb</span></div>
+            <div class="bar-col"><div class="bar bar-current" style="height:91%"></div><span class="bar-label">Mar</span></div>
+          </div>
+        </div>
+
+        <!-- Top pages -->
+        <div class="pages-section">
+          <div class="chart-header">
+            <span class="chart-title">Top pages</span>
+          </div>
+          <div class="pages-list">
+            <div class="page-row">
+              <span class="page-path">/dashboard</span>
+              <div class="page-bar-wrap"><div class="page-bar" style="width:88%"></div></div>
+              <span class="page-count">2,841</span>
+            </div>
+            <div class="page-row">
+              <span class="page-path">/pricing</span>
+              <div class="page-bar-wrap"><div class="page-bar" style="width:62%"></div></div>
+              <span class="page-count">1,992</span>
+            </div>
+            <div class="page-row">
+              <span class="page-path">/signup</span>
+              <div class="page-bar-wrap"><div class="page-bar" style="width:48%"></div></div>
+              <span class="page-count">1,543</span>
+            </div>
+            <div class="page-row">
+              <span class="page-path">/docs</span>
+              <div class="page-bar-wrap"><div class="page-bar" style="width:31%"></div></div>
+              <span class="page-count">987</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- Table -->
       <div class="table-section">
         <div class="table-header">Recent activity</div>
@@ -127,6 +176,11 @@
             <span class="row-user">jordan@example.com</span>
             <span class="row-event">Exported data</span>
             <span class="badge-muted">Idle</span>
+          </div>
+          <div class="table-row">
+            <span class="row-user">riley@example.com</span>
+            <span class="row-event">Invited team</span>
+            <span class="badge-primary">Active</span>
           </div>
         </div>
       </div>
@@ -301,6 +355,120 @@
   .delta-badge.muted {
     background: color-mix(in srgb, var(--muted-fg) 12%, transparent);
     color: var(--muted-fg);
+  }
+
+  /* Mid row: chart + pages */
+  .mid-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .chart-section,
+  .pages-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+
+  .chart-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+  }
+
+  .chart-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--card-fg);
+  }
+
+  .chart-period {
+    font-size: 10px;
+    color: var(--muted-fg);
+  }
+
+  /* Bar chart */
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 6px;
+    height: 80px;
+  }
+
+  .bar-col {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    height: 100%;
+    justify-content: flex-end;
+  }
+
+  .bar {
+    width: 100%;
+    background: color-mix(in srgb, var(--primary) 30%, transparent);
+    border-radius: 3px 3px 0 0;
+    min-height: 4px;
+  }
+
+  .bar.bar-current {
+    background: var(--primary);
+  }
+
+  .bar-label {
+    font-size: 9px;
+    color: var(--muted-fg);
+    white-space: nowrap;
+  }
+
+  /* Top pages */
+  .pages-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .page-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .page-path {
+    font-size: 11px;
+    color: var(--card-fg);
+    width: 68px;
+    flex-shrink: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .page-bar-wrap {
+    flex: 1;
+    height: 5px;
+    background: var(--muted);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  .page-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+  }
+
+  .page-count {
+    font-size: 10px;
+    color: var(--muted-fg);
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
   }
 
   /* Table */

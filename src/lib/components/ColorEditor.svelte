@@ -11,6 +11,7 @@
 		p3MaxChroma
 	} from '$lib/colors';
 	import SliderRow from './SliderRow.svelte';
+	import ColorWheel from './ColorWheel.svelte';
 
 	interface Props {
 		color: PaletteColor;
@@ -20,6 +21,7 @@
 
 	let { color, onUpdate, onDragStart }: Props = $props();
 
+	let containerWidth = $state(0);
 	let copied = $state<string | null>(null);
 
 	let hex = $derived(oklchToHex(color.l, color.c, color.h));
@@ -69,7 +71,7 @@
 	}
 </script>
 
-<div class="editor">
+<div class="editor" bind:clientWidth={containerWidth}>
 	<div class="sliders">
 		<SliderRow
 			label="L"
@@ -147,6 +149,16 @@
 			</button>
 		</div>
 	</div>
+
+	{#if containerWidth > 0}
+		<div class="wheel-wrap">
+			<ColorWheel
+				currentColors={[color]}
+				fixedL={color.l}
+				size={containerWidth}
+			/>
+		</div>
+	{/if}
 </div>
 
 <style>
@@ -154,6 +166,12 @@
 		display: flex;
 		flex-direction: column;
 		gap: 24px;
+	}
+
+	.wheel-wrap {
+		border-radius: 10px;
+		overflow: hidden;
+		line-height: 0;
 	}
 
 	.sliders {

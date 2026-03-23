@@ -118,6 +118,8 @@
 					<Move size={18} />
 				</div>
 
+				<div class="swatch-name" aria-hidden="true">{color.name}</div>
+
 				<div class="swatch-actions">
 					<button
 						class="swatch-btn"
@@ -245,6 +247,26 @@
 	}
 
 	.swatch-wrapper:hover .move-hint {
+		opacity: 1;
+	}
+
+	.swatch-name {
+		position: absolute;
+		bottom: 8px;
+		left: 50%;
+		transform: translateX(-50%);
+		font-size: 10px;
+		font-weight: 600;
+		letter-spacing: 0.04em;
+		color: rgba(255, 255, 255, 0.9);
+		text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+		white-space: nowrap;
+		pointer-events: none;
+		opacity: 0;
+		transition: opacity 0.15s;
+	}
+
+	.swatch-wrapper:hover .swatch-name {
 		opacity: 1;
 	}
 

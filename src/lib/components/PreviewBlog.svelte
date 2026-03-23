@@ -82,6 +82,30 @@
       <div class="post-title">Tokens, themes, and the dark mode problem</div>
       <div class="post-excerpt">Semantic color tokens are the only way to do dark mode right. Here's the pattern.</div>
     </div>
+    <div class="post-card">
+      <div class="post-date">Mar 5, 2026</div>
+      <div class="post-title">The case for ditching hex codes entirely</div>
+      <div class="post-excerpt">oklch() gives you control hex never could. Here's why we're not looking back.</div>
+    </div>
+    <div class="post-card">
+      <div class="post-date">Feb 27, 2026</div>
+      <div class="post-title">How to pick a font that works with your palette</div>
+      <div class="post-excerpt">Type and color aren't separate decisions. The contrast between them shapes everything.</div>
+    </div>
+  </section>
+
+  <!-- Newsletter -->
+  <section class="newsletter">
+    <div class="newsletter-inner">
+      <div class="newsletter-text">
+        <div class="newsletter-title">Stay in the loop</div>
+        <div class="newsletter-sub">Design, code, and color — straight to your inbox every Tuesday.</div>
+      </div>
+      <div class="newsletter-form">
+        <input class="newsletter-input" type="email" placeholder="you@example.com" readonly />
+        <button class="newsletter-btn">Subscribe</button>
+      </div>
+    </div>
   </section>
 
   <!-- Tags -->
@@ -290,6 +314,69 @@
     color: var(--muted-fg);
     font-size: 12px;
     line-height: 1.5;
+  }
+
+  /* Newsletter */
+  .newsletter {
+    padding: 0 32px 28px;
+  }
+
+  .newsletter-inner {
+    background: color-mix(in srgb, var(--primary) 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--primary) 25%, transparent);
+    border-radius: 10px;
+    padding: 24px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+
+  .newsletter-title {
+    color: var(--card-fg);
+    font-size: 15px;
+    font-weight: 700;
+    margin-bottom: 4px;
+  }
+
+  .newsletter-sub {
+    color: var(--muted-fg);
+    font-size: 12px;
+    line-height: 1.5;
+    max-width: 280px;
+  }
+
+  .newsletter-form {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .newsletter-input {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 7px 12px;
+    font-size: 12px;
+    font-family: inherit;
+    color: var(--muted-fg);
+    width: 180px;
+    outline: none;
+    cursor: default;
+  }
+
+  .newsletter-btn {
+    background: var(--primary);
+    color: var(--primary-fg);
+    border: none;
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    white-space: nowrap;
   }
 
   /* Tags */

@@ -84,6 +84,72 @@
     </div>
   </section>
 
+  <!-- Testimonials -->
+  <section class="testimonials">
+    <div class="testimonial">
+      <p class="quote">"Switched our whole design system in an afternoon. The previews made it obvious which palette worked."</p>
+      <div class="testimonial-meta">
+        <span class="t-avatar"></span>
+        <span class="t-name">Jamie L.</span>
+        <span class="t-role">Lead Designer, Vercel</span>
+      </div>
+    </div>
+    <div class="testimonial">
+      <p class="quote">"Finally a tool that thinks in perceptual color. My dark mode actually looks intentional now."</p>
+      <div class="testimonial-meta">
+        <span class="t-avatar"></span>
+        <span class="t-name">Chris M.</span>
+        <span class="t-role">Frontend Eng, Linear</span>
+      </div>
+    </div>
+    <div class="testimonial">
+      <p class="quote">"The harmony suggestions saved me hours of tweaking. Complementary palette in one click."</p>
+      <div class="testimonial-meta">
+        <span class="t-avatar"></span>
+        <span class="t-name">Priya S.</span>
+        <span class="t-role">Product, Figma</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing -->
+  <section class="pricing">
+    <div class="pricing-label">Pricing</div>
+    <div class="pricing-grid">
+      <div class="pricing-card">
+        <div class="plan-name">Free</div>
+        <div class="plan-price">$0<span class="plan-per">/mo</span></div>
+        <div class="plan-features">
+          <div class="plan-feature">3 palettes</div>
+          <div class="plan-feature">All color formats</div>
+          <div class="plan-feature muted">No sharing</div>
+        </div>
+        <button class="plan-btn outlined">Get started</button>
+      </div>
+      <div class="pricing-card featured">
+        <div class="plan-badge">Popular</div>
+        <div class="plan-name">Pro</div>
+        <div class="plan-price">$9<span class="plan-per">/mo</span></div>
+        <div class="plan-features">
+          <div class="plan-feature">Unlimited palettes</div>
+          <div class="plan-feature">Shareable links</div>
+          <div class="plan-feature">Export to Tailwind</div>
+        </div>
+        <button class="plan-btn primary">Start free trial</button>
+      </div>
+      <div class="pricing-card">
+        <div class="plan-name">Team</div>
+        <div class="plan-price">$29<span class="plan-per">/mo</span></div>
+        <div class="plan-features">
+          <div class="plan-feature">Everything in Pro</div>
+          <div class="plan-feature">Team workspace</div>
+          <div class="plan-feature">Priority support</div>
+        </div>
+        <button class="plan-btn outlined">Contact us</button>
+      </div>
+    </div>
+  </section>
+
   <!-- Button showcase -->
   <section class="showcase">
     <div class="showcase-label">Components</div>
@@ -268,6 +334,191 @@
     color: var(--muted-fg);
     font-size: 12px;
     line-height: 1.5;
+  }
+
+  /* Testimonials */
+  .testimonials {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    padding: 28px 32px;
+    background: var(--bg);
+    border-top: 1px solid var(--border);
+  }
+
+  .testimonial {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 18px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .quote {
+    color: var(--card-fg);
+    font-size: 12px;
+    line-height: 1.6;
+    margin: 0;
+    opacity: 0.85;
+  }
+
+  .testimonial-meta {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .t-avatar {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--primary) 25%, transparent);
+    border: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .t-name {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--card-fg);
+  }
+
+  .t-role {
+    font-size: 10px;
+    color: var(--muted-fg);
+    margin-left: auto;
+  }
+
+  /* Pricing */
+  .pricing {
+    padding: 28px 32px;
+    background: var(--muted);
+    border-top: 1px solid var(--border);
+  }
+
+  .pricing-label {
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    color: var(--muted-fg);
+    opacity: 0.6;
+    margin-bottom: 16px;
+  }
+
+  .pricing-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+
+  .pricing-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+  }
+
+  .pricing-card.featured {
+    border-color: var(--primary);
+    box-shadow: 0 0 0 1px var(--primary);
+  }
+
+  .plan-badge {
+    position: absolute;
+    top: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--primary);
+    color: var(--primary-fg);
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 2px 8px;
+    border-radius: 10px;
+    white-space: nowrap;
+  }
+
+  .plan-name {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-fg);
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+  }
+
+  .plan-price {
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--card-fg);
+    line-height: 1;
+  }
+
+  .plan-per {
+    font-size: 13px;
+    font-weight: 400;
+    color: var(--muted-fg);
+  }
+
+  .plan-features {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex: 1;
+  }
+
+  .plan-feature {
+    font-size: 11px;
+    color: var(--card-fg);
+    padding-left: 12px;
+    position: relative;
+  }
+
+  .plan-feature::before {
+    content: '✓';
+    position: absolute;
+    left: 0;
+    color: var(--accent);
+    font-size: 10px;
+  }
+
+  .plan-feature.muted {
+    color: var(--muted-fg);
+    opacity: 0.5;
+  }
+
+  .plan-feature.muted::before {
+    content: '–';
+    color: var(--muted-fg);
+  }
+
+  .plan-btn {
+    width: 100%;
+    padding: 8px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+    font-family: inherit;
+    text-align: center;
+  }
+
+  .plan-btn.primary {
+    background: var(--primary);
+    color: var(--primary-fg);
+    border: none;
+  }
+
+  .plan-btn.outlined {
+    background: transparent;
+    color: var(--card-fg);
+    border: 1px solid var(--border);
   }
 
   /* Showcase */
