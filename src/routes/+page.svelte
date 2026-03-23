@@ -1,12 +1,15 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import type { OklchColor } from '$lib/colors';
+	import { getSuggestions, autoAssignRoles } from '$lib/colors';
+	import type { RoleKey } from '$lib/colors';
 	import type { PaletteColor } from '$lib/palette.svelte';
-	import { getSuggestions } from '$lib/colors';
 	import { paletteStore } from '$lib/palette.svelte';
+	import { randomColorName } from '$lib/nameGenerator';
 	import SwatchRow from '$lib/components/SwatchRow.svelte';
 	import ColorEditor from '$lib/components/ColorEditor.svelte';
 	import ColorSuggestions from '$lib/components/ColorSuggestions.svelte';
+	import PreviewPanel from '$lib/components/PreviewPanel.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
 
 	type PendingImport = { id: string; name: string; colors: PaletteColor[] };
@@ -53,13 +56,24 @@
 	let colors = $derived(paletteStore.active?.colors ?? []);
 	let suggestions = $derived(colors.length > 0 ? getSuggestions(colors[selectedIndex]) : []);
 
+	function remapRoles(oldRoles: Partial<Record<RoleKey, number>>, mapFn: (idx: number) => number | undefined): Partial<Record<RoleKey, number>> {
+		const result: Partial<Record<RoleKey, number>> = {};
+		for (const [role, idx] of Object.entries(oldRoles) as [RoleKey, number][]) {
+			const newIdx = mapFn(idx);
+			if (newIdx !== undefined) result[role] = newIdx;
+		}
+		return result;
+	}
+
 	function removeColor(i: number) {
-		if (!paletteStore.active) return;
+		const palette = paletteStore.active;
+		if (!palette) return;
 		const removed = colors[i].w;
 		const remaining = colors.filter((_, idx) => idx !== i);
 		const share = removed / remaining.length;
 		const newColors = remaining.map((c) => ({ ...c, w: c.w + share }));
-		paletteStore.updateActive({ colors: newColors });
+		const newRoles = remapRoles(palette.roles, (idx) => (idx === i ? undefined : idx > i ? idx - 1 : idx));
+		paletteStore.updateActive({ colors: newColors, roles: newRoles });
 		if (selectedIndex >= newColors.length) {
 			selectedIndex = newColors.length - 1;
 		} else if (selectedIndex === i && selectedIndex > 0) {
@@ -74,11 +88,16 @@
 	}
 
 	function reorderColors(from: number, to: number) {
-		if (!paletteStore.active) return;
+		const palette = paletteStore.active;
+		if (!palette) return;
 		const next = [...colors];
 		const [moved] = next.splice(from, 1);
 		next.splice(to, 0, moved);
-		paletteStore.updateActive({ colors: next });
+		// Map each original color to its new index by reference
+		const newPos = new Map<PaletteColor, number>();
+		next.forEach((c, i) => newPos.set(c, i));
+		const newRoles = remapRoles(palette.roles, (idx) => newPos.get(colors[idx]));
+		paletteStore.updateActive({ colors: next, roles: newRoles });
 		if (selectedIndex === from) {
 			selectedIndex = to;
 		} else if (from < to && selectedIndex > from && selectedIndex <= to) {
@@ -96,19 +115,29 @@
 
 	function replacePalette(newColors: OklchColor[]) {
 		const w = 100 / newColors.length;
-		const withWidths: PaletteColor[] = newColors.map((c) => ({ ...c, w }));
-		paletteStore.updateActive({ colors: withWidths });
+		const usedNames = new Set<string>();
+		const withWidths: PaletteColor[] = newColors.map((c) => {
+			const name = randomColorName(usedNames);
+			usedNames.add(name);
+			return { ...c, w, name };
+		});
+		paletteStore.updateActive({ colors: withWidths, roles: autoAssignRoles(withWidths) });
 		selectedIndex = 0;
 	}
 
 	function duplicateColor(i: number) {
-		if (!paletteStore.active) return;
+		const palette = paletteStore.active;
+		if (!palette) return;
 		const newCount = colors.length + 1;
 		const w = 100 / newCount;
-		const dupe: PaletteColor = { ...colors[i], w };
+		const usedNames = new Set(colors.map((c) => c.name));
+		const dupeName = randomColorName(usedNames);
+		const dupe: PaletteColor = { ...colors[i], w, name: dupeName };
 		const newColors = colors.map((c) => ({ ...c, w }));
 		newColors.splice(i + 1, 0, dupe);
-		paletteStore.updateActive({ colors: newColors });
+		// Roles pointing to indices > i shift up by 1 (new color inserted at i+1)
+		const newRoles = remapRoles(palette.roles, (idx) => (idx > i ? idx + 1 : idx));
+		paletteStore.updateActive({ colors: newColors, roles: newRoles });
 		selectedIndex = i + 1;
 	}
 
@@ -116,10 +145,23 @@
 		if (!paletteStore.active) return;
 		const newCount = colors.length + 1;
 		const w = 100 / newCount;
+		const usedNames = new Set(colors.map((c) => c.name));
 		const newColors = colors.map((c) => ({ ...c, w }));
-		newColors.push({ ...color, w });
+		newColors.push({ ...color, w, name: randomColorName(usedNames) });
 		paletteStore.updateActive({ colors: newColors });
 		selectedIndex = newColors.length - 1;
+	}
+
+	function updateRoles(role: RoleKey, colorIndex: number | undefined) {
+		const palette = paletteStore.active;
+		if (!palette) return;
+		const newRoles = { ...palette.roles };
+		if (colorIndex === undefined) {
+			delete newRoles[role];
+		} else {
+			newRoles[role] = colorIndex;
+		}
+		paletteStore.updateActive({ roles: newRoles });
 	}
 
 	function toggleSidebar() {
@@ -188,14 +230,19 @@
 					onSuggestionHover={(c) => (suggestionHoverColor = c)}
 				/>
 			</div>
-			<div class="editor-section">
-				<ColorEditor color={colors[selectedIndex]} onUpdate={updateColor} />
-				<ColorSuggestions
-					baseColor={colors[selectedIndex]}
-					currentColors={colors}
-					externalPreview={suggestionHoverColor ? [suggestionHoverColor] : null}
-					onReplacePalette={replacePalette}
-				/>
+			<div class="content-grid">
+				<div class="editor-col">
+					<ColorEditor color={colors[selectedIndex]} onUpdate={updateColor} />
+					<ColorSuggestions
+						baseColor={colors[selectedIndex]}
+						currentColors={colors}
+						externalPreview={suggestionHoverColor ? [suggestionHoverColor] : null}
+						onReplacePalette={replacePalette}
+					/>
+				</div>
+				<div class="preview-col">
+					<PreviewPanel palette={paletteStore.active} onRoleChange={updateRoles} />
+				</div>
 			</div>
 		{:else}
 			<div class="empty-state">
@@ -230,19 +277,32 @@
 		flex: 1;
 		display: flex;
 		flex-direction: column;
-		overflow-y: auto;
+		overflow: hidden;
 		min-width: 0;
 	}
 
 	.swatch-section {
 		width: 100%;
+		flex-shrink: 0;
 	}
 
-	.editor-section {
-		max-width: 720px;
-		width: 100%;
-		margin: 0 auto;
-		padding: 40px 32px;
+	.content-grid {
+		display: grid;
+		grid-template-columns: minmax(0, 460px) minmax(0, 1fr);
+		flex: 1;
+		overflow: hidden;
+	}
+
+	.editor-col {
+		overflow-y: auto;
+		padding: 32px;
+		border-right: 1px solid rgba(255, 255, 255, 0.06);
+	}
+
+	.preview-col {
+		overflow: hidden;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.empty-state {

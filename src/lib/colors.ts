@@ -130,6 +130,90 @@ export function monochromaticPalette(base: OklchColor): OklchColor[] {
 	];
 }
 
+// ─── Semantic color roles (shadcn/ui naming) ────────────────────────────────
+
+export type RoleKey =
+	| 'background'
+	| 'foreground'
+	| 'card'
+	| 'card-foreground'
+	| 'primary'
+	| 'primary-foreground'
+	| 'muted'
+	| 'muted-foreground'
+	| 'accent'
+	| 'accent-foreground'
+	| 'border';
+
+/** Pick the color index (excluding `exclude`) with the greatest L contrast against `bgIdx`. */
+function pickMaxContrast(bgIdx: number, colors: OklchColor[], exclude: Set<number>): number {
+	const bgL = bgIdx >= 0 ? (colors[bgIdx]?.l ?? 0.5) : 0.5;
+	let best = -1;
+	let bestDiff = -1;
+	for (let i = 0; i < colors.length; i++) {
+		if (exclude.has(i)) continue;
+		const diff = Math.abs(colors[i].l - bgL);
+		if (diff > bestDiff) {
+			bestDiff = diff;
+			best = i;
+		}
+	}
+	return best;
+}
+
+export function autoAssignRoles(colors: OklchColor[]): Partial<Record<RoleKey, number>> {
+	if (colors.length === 0) return {};
+
+	const roles: Partial<Record<RoleKey, number>> = {};
+	// `used` tracks which indices have been used for *background* roles (not foreground)
+	// so foreground roles can reuse the same index as other foreground roles
+	const usedBg = new Set<number>();
+
+	const pickBg = (scoreFn: (c: OklchColor) => number, descending = true): number => {
+		let best = -1;
+		let bestScore = descending ? -Infinity : Infinity;
+		for (let i = 0; i < colors.length; i++) {
+			if (usedBg.has(i)) continue;
+			const score = scoreFn(colors[i]);
+			if (descending ? score > bestScore : score < bestScore) {
+				bestScore = score;
+				best = i;
+			}
+		}
+		return best;
+	};
+
+	const assignBg = (role: RoleKey, idx: number) => {
+		if (idx === -1) return;
+		roles[role] = idx;
+		usedBg.add(idx);
+	};
+
+	const assignFg = (role: RoleKey, bgRole: RoleKey) => {
+		const bgIdx = roles[bgRole] ?? -1;
+		// All colors eligible for foreground (no exclusion — sharing is allowed)
+		const idx = pickMaxContrast(bgIdx, colors, new Set());
+		if (idx !== -1) roles[role] = idx;
+	};
+
+	// Assign backgrounds in order
+	assignBg('background', pickBg((c) => c.l));
+	assignBg('card', pickBg((c) => c.l)); // 2nd highest L
+	assignBg('primary', pickBg((c) => c.c)); // highest C
+	assignBg('accent', pickBg((c) => c.c)); // 2nd highest C
+	assignBg('muted', pickBg((c) => c.l)); // 3rd highest L (subtle bg)
+	assignBg('border', pickBg((c) => c.l, false)); // lower-L for borders
+
+	// Foreground: highest contrast against their paired background (colors may be shared)
+	assignFg('foreground', 'background');
+	assignFg('card-foreground', 'card');
+	assignFg('primary-foreground', 'primary');
+	assignFg('muted-foreground', 'muted');
+	assignFg('accent-foreground', 'accent');
+
+	return roles;
+}
+
 export const PALETTE_SCHEMES = [
 	{ label: 'Complementary', fn: complementaryPalette },
 	{ label: 'Analogous', fn: analogousPalette },

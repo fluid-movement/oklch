@@ -79,14 +79,12 @@
 
 	.content {
 		display: flex;
-		gap: 24px;
-		align-items: flex-start;
+		flex-direction: column;
+		gap: 20px;
 	}
 
 	/* Scheme panel */
 	.scheme-panel {
-		flex: 1;
-		min-width: 0;
 		display: flex;
 		flex-direction: column;
 		gap: 10px;

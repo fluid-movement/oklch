@@ -54,7 +54,7 @@
 		hexInput = val;
 		const parsed = hexToOklch(val);
 		if (parsed) {
-			onUpdate({ ...parsed, w: color.w });
+			onUpdate({ ...parsed, w: color.w, name: color.name });
 		}
 	}
 
@@ -63,7 +63,7 @@
 		oklchInput = val;
 		const match = val.match(/oklch\(\s*([\d.]+)\s+([\d.]+)\s+([\d.]+)\s*\)/);
 		if (match) {
-			onUpdate({ l: parseFloat(match[1]), c: parseFloat(match[2]), h: parseFloat(match[3]), w: color.w });
+			onUpdate({ l: parseFloat(match[1]), c: parseFloat(match[2]), h: parseFloat(match[3]), w: color.w, name: color.name });
 		}
 	}
 </script>

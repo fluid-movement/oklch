@@ -19,3 +19,15 @@ export function randomName(): string {
 	const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
 	return `${adj} ${noun}`;
 }
+
+export function randomColorName(used: Set<string> = new Set()): string {
+	const available = NOUNS.filter((n) => !used.has(n));
+	if (available.length === 0) {
+		// All nouns taken — append a number
+		const noun = NOUNS[Math.floor(Math.random() * NOUNS.length)];
+		let i = 2;
+		while (used.has(`${noun}${i}`)) i++;
+		return `${noun}${i}`;
+	}
+	return available[Math.floor(Math.random() * available.length)];
+}
