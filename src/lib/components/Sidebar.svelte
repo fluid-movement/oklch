@@ -2,7 +2,7 @@
 	import { paletteStore } from '$lib/palette.svelte';
 	import type { Palette } from '$lib/palette.svelte';
 	import { oklchToHex } from '$lib/colors';
-	import { Plus, Copy, Trash2, PanelLeftClose, PanelLeftOpen, Link } from 'lucide-svelte';
+	import { Plus, Copy, Trash2, Link } from 'lucide-svelte';
 
 	interface Props {
 		open: boolean;
@@ -48,24 +48,11 @@
 </script>
 
 <aside class="sidebar" class:collapsed={!open}>
-	<div class="sidebar-header">
-		{#if open}
+	{#if open}
+		<div class="sidebar-header">
 			<span class="sidebar-title">Palettes</span>
-		{/if}
-		<button
-			class="toggle-btn"
-			onclick={onToggle}
-			disabled={isEmpty}
-			aria-label={open ? 'Collapse sidebar' : 'Expand sidebar'}
-			title={open ? 'Collapse' : 'Expand'}
-		>
-			{#if open}
-				<PanelLeftClose size={16} />
-			{:else}
-				<PanelLeftOpen size={16} />
-			{/if}
-		</button>
-	</div>
+		</div>
+	{/if}
 
 	{#if open}
 		<div class="sidebar-content">
@@ -181,22 +168,17 @@
 	}
 
 	.sidebar.collapsed {
-		width: 44px;
+		width: 0;
+		border-right: none;
 	}
 
 	.sidebar-header {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
 		padding: 14px 12px 14px 16px;
 		border-bottom: 1px solid rgba(255, 255, 255, 0.07);
 		flex-shrink: 0;
 		min-height: 48px;
-	}
-
-	.sidebar.collapsed .sidebar-header {
-		justify-content: center;
-		padding: 14px 0;
 	}
 
 	.sidebar-title {
@@ -205,30 +187,6 @@
 		letter-spacing: 0.1em;
 		text-transform: uppercase;
 		color: rgba(255, 255, 255, 0.35);
-	}
-
-	.toggle-btn {
-		background: none;
-		border: none;
-		color: rgba(255, 255, 255, 0.3);
-		cursor: pointer;
-		padding: 4px;
-		border-radius: 4px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		transition: color 0.15s, background 0.15s;
-		flex-shrink: 0;
-	}
-
-	.toggle-btn:hover:not(:disabled) {
-		color: rgba(255, 255, 255, 0.7);
-		background: rgba(255, 255, 255, 0.07);
-	}
-
-	.toggle-btn:disabled {
-		opacity: 0.3;
-		cursor: default;
 	}
 
 	.sidebar-content {

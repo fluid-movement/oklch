@@ -202,7 +202,7 @@
 		position: relative;
 		flex: 1;
 		display: flex;
-		height: 200px;
+		height: clamp(120px, 18vh, 200px);
 	}
 
 	.swatch-wrapper {
@@ -336,7 +336,7 @@
 
 	.add-btn {
 		width: 56px;
-		height: 200px;
+		height: clamp(120px, 18vh, 200px);
 		border-radius: 0;
 		border: none;
 		border-right: 2px dashed rgba(255, 255, 255, 0.15);

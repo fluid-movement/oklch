@@ -8,9 +8,28 @@
 	import { randomColorName } from '$lib/nameGenerator';
 	import SwatchRow from '$lib/components/SwatchRow.svelte';
 	import ColorEditor from '$lib/components/ColorEditor.svelte';
-	import ColorSuggestions from '$lib/components/ColorSuggestions.svelte';
 	import PreviewPanel from '$lib/components/PreviewPanel.svelte';
 	import Sidebar from '$lib/components/Sidebar.svelte';
+	import AppToolbar from '$lib/components/AppToolbar.svelte';
+
+	type ScreenType = 'saas' | 'blog' | 'dashboard';
+	type FontKey = 'business' | 'modern' | 'playful' | 'mono';
+
+	const FONTS: { key: FontKey; family: string }[] = [
+		{ key: 'business', family: "'Inter', system-ui, sans-serif" },
+		{ key: 'modern', family: "'Plus Jakarta Sans', system-ui, sans-serif" },
+		{ key: 'playful', family: "'Nunito', system-ui, sans-serif" },
+		{ key: 'mono', family: "'JetBrains Mono', monospace" },
+	];
+
+	const ROLE_ORDER: RoleKey[] = [
+		'background', 'foreground',
+		'card', 'card-foreground',
+		'primary', 'primary-foreground',
+		'muted', 'muted-foreground',
+		'accent', 'accent-foreground',
+		'border',
+	];
 
 	type PendingImport = { id: string; name: string; colors: PaletteColor[] };
 
@@ -18,6 +37,12 @@
 	let sidebarOpen = $state(true);
 	let suggestionHoverColor = $state<OklchColor | null>(null);
 	let pendingImport = $state<PendingImport | null>(null);
+
+	let screenType = $state<ScreenType>('saas');
+	let fontKey = $state<FontKey>('business');
+	let cssCopied = $state(false);
+
+	const fontFamily = $derived(FONTS.find((f) => f.key === fontKey)!.family);
 
 	onMount(() => {
 		const params = new URLSearchParams(window.location.search);
@@ -53,8 +78,42 @@
 		selectedIndex = 0;
 	});
 
+	// Keyboard shortcuts: Cmd+Z / Ctrl+Z = undo, Cmd+Shift+Z / Ctrl+Y = redo
+	$effect(() => {
+		function handleKey(e: KeyboardEvent) {
+			const mod = e.metaKey || e.ctrlKey;
+			if (!mod) return;
+			if (e.key === 'z' && !e.shiftKey) {
+				e.preventDefault();
+				paletteStore.undo();
+			} else if ((e.key === 'z' && e.shiftKey) || e.key === 'y') {
+				e.preventDefault();
+				paletteStore.redo();
+			}
+		}
+		window.addEventListener('keydown', handleKey);
+		return () => window.removeEventListener('keydown', handleKey);
+	});
+
 	let colors = $derived(paletteStore.active?.colors ?? []);
 	let suggestions = $derived(colors.length > 0 ? getSuggestions(colors[selectedIndex]) : []);
+
+	function copyCss() {
+		const palette = paletteStore.active;
+		if (!palette) return;
+		const lines = ROLE_ORDER
+			.map((role) => {
+				const idx = palette.roles[role];
+				if (idx === undefined) return null;
+				const c = palette.colors[idx];
+				if (!c) return null;
+				return `  --${role}: oklch(${c.l.toFixed(3)} ${c.c.toFixed(3)} ${c.h.toFixed(1)});`;
+			})
+			.filter(Boolean);
+		navigator.clipboard.writeText(`:root {\n${lines.join('\n')}\n}`);
+		cssCopied = true;
+		setTimeout(() => { cssCopied = false; }, 1500);
+	}
 
 	function remapRoles(oldRoles: Partial<Record<RoleKey, number>>, mapFn: (idx: number) => number | undefined): Partial<Record<RoleKey, number>> {
 		const result: Partial<Record<RoleKey, number>> = {};
@@ -68,6 +127,7 @@
 	function removeColor(i: number) {
 		const palette = paletteStore.active;
 		if (!palette) return;
+		paletteStore.snapshot();
 		const removed = colors[i].w;
 		const remaining = colors.filter((_, idx) => idx !== i);
 		const share = removed / remaining.length;
@@ -90,10 +150,10 @@
 	function reorderColors(from: number, to: number) {
 		const palette = paletteStore.active;
 		if (!palette) return;
+		paletteStore.snapshot();
 		const next = [...colors];
 		const [moved] = next.splice(from, 1);
 		next.splice(to, 0, moved);
-		// Map each original color to its new index by reference
 		const newPos = new Map<PaletteColor, number>();
 		next.forEach((c, i) => newPos.set(c, i));
 		const newRoles = remapRoles(palette.roles, (idx) => newPos.get(colors[idx]));
@@ -114,6 +174,7 @@
 	}
 
 	function replacePalette(newColors: OklchColor[]) {
+		paletteStore.snapshot();
 		const w = 100 / newColors.length;
 		const usedNames = new Set<string>();
 		const withWidths: PaletteColor[] = newColors.map((c) => {
@@ -128,6 +189,7 @@
 	function duplicateColor(i: number) {
 		const palette = paletteStore.active;
 		if (!palette) return;
+		paletteStore.snapshot();
 		const newCount = colors.length + 1;
 		const w = 100 / newCount;
 		const usedNames = new Set(colors.map((c) => c.name));
@@ -135,7 +197,6 @@
 		const dupe: PaletteColor = { ...colors[i], w, name: dupeName };
 		const newColors = colors.map((c) => ({ ...c, w }));
 		newColors.splice(i + 1, 0, dupe);
-		// Roles pointing to indices > i shift up by 1 (new color inserted at i+1)
 		const newRoles = remapRoles(palette.roles, (idx) => (idx > i ? idx + 1 : idx));
 		paletteStore.updateActive({ colors: newColors, roles: newRoles });
 		selectedIndex = i + 1;
@@ -143,6 +204,7 @@
 
 	function addSuggestedColor(color: OklchColor) {
 		if (!paletteStore.active) return;
+		paletteStore.snapshot();
 		const newCount = colors.length + 1;
 		const w = 100 / newCount;
 		const usedNames = new Set(colors.map((c) => c.name));
@@ -155,6 +217,7 @@
 	function updateRoles(role: RoleKey, colorIndex: number | undefined) {
 		const palette = paletteStore.active;
 		if (!palette) return;
+		paletteStore.snapshot();
 		const newRoles = { ...palette.roles };
 		if (colorIndex === undefined) {
 			delete newRoles[role];
@@ -170,6 +233,10 @@
 		}
 	}
 
+	function handleDragStart() {
+		paletteStore.snapshot();
+	}
+
 	// Force sidebar open when empty
 	$effect(() => {
 		if (paletteStore.palettes.length === 0) {
@@ -179,8 +246,8 @@
 </script>
 
 {#if pendingImport}
-	<div class="modal-backdrop" onclick={() => (pendingImport = null)} role="presentation">
-		<div class="modal" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()}>
+	<div class="modal-backdrop" onclick={() => (pendingImport = null)} onkeydown={(e) => e.key === 'Escape' && (pendingImport = null)} role="presentation">
+		<div class="modal" role="dialog" aria-modal="true" tabindex="-1" onclick={(e) => e.stopPropagation()} onkeydown={(e) => e.stopPropagation()}>
 			<p class="modal-title">Palette already exists</p>
 			<p class="modal-body">
 				"{pendingImport.name}" is in your collection but has different colors. What would you like
@@ -230,18 +297,29 @@
 					onSuggestionHover={(c) => (suggestionHoverColor = c)}
 				/>
 			</div>
+			<AppToolbar
+				{sidebarOpen}
+				canToggleSidebar={paletteStore.palettes.length > 0}
+				onToggleSidebar={toggleSidebar}
+				canUndo={paletteStore.canUndo}
+				canRedo={paletteStore.canRedo}
+				onUndo={() => paletteStore.undo()}
+				onRedo={() => paletteStore.redo()}
+				selectedColor={colors[selectedIndex] ?? null}
+				onReplace={replacePalette}
+				{screenType}
+				{fontKey}
+				onScreenChange={(s) => (screenType = s)}
+				onFontChange={(f) => (fontKey = f)}
+				onCopyCss={copyCss}
+				{cssCopied}
+			/>
 			<div class="content-grid">
 				<div class="editor-col">
-					<ColorEditor color={colors[selectedIndex]} onUpdate={updateColor} />
-					<ColorSuggestions
-						baseColor={colors[selectedIndex]}
-						currentColors={colors}
-						externalPreview={suggestionHoverColor ? [suggestionHoverColor] : null}
-						onReplacePalette={replacePalette}
-					/>
+					<ColorEditor color={colors[selectedIndex]} onUpdate={updateColor} onDragStart={handleDragStart} />
 				</div>
 				<div class="preview-col">
-					<PreviewPanel palette={paletteStore.active} onRoleChange={updateRoles} />
+					<PreviewPanel palette={paletteStore.active} onRoleChange={updateRoles} {screenType} {fontFamily} />
 				</div>
 			</div>
 		{:else}

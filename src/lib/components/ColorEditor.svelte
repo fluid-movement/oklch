@@ -15,9 +15,10 @@
 	interface Props {
 		color: PaletteColor;
 		onUpdate: (color: PaletteColor) => void;
+		onDragStart?: () => void;
 	}
 
-	let { color, onUpdate }: Props = $props();
+	let { color, onUpdate, onDragStart }: Props = $props();
 
 	let copied = $state<string | null>(null);
 
@@ -77,6 +78,7 @@
 			max={1}
 			step={0.001}
 			gradient={gradL}
+			{onDragStart}
 			onChange={(v) => update({ l: v })}
 		/>
 		<SliderRow
@@ -88,6 +90,7 @@
 			gradient={gradC}
 			boundary={srgbBoundary}
 			p3Boundary={p3Boundary}
+			{onDragStart}
 			onChange={(v) => update({ c: v })}
 		/>
 		<SliderRow
@@ -97,6 +100,7 @@
 			max={360}
 			step={1}
 			gradient={gradH}
+			{onDragStart}
 			onChange={(v) => update({ h: v })}
 		/>
 	</div>

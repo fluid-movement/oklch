@@ -18,6 +18,11 @@ export type Palette = {
 const STORAGE_KEY = 'oklch_palettes';
 const ACTIVE_KEY = 'oklch_active';
 
+// Session-only undo/redo history, keyed by palette id
+const undoStacks = new Map<string, Palette[]>();
+const redoStacks = new Map<string, Palette[]>();
+const MAX_HISTORY = 30;
+
 function randomColor(usedNames: Set<string> = new Set()): PaletteColor {
 	return {
 		l: Math.round((0.45 + Math.random() * 0.35) * 1000) / 1000,
@@ -83,6 +88,52 @@ function createStore() {
 
 	let active = $derived(palettes.find((p) => p.id === activeId) ?? null);
 
+	let canUndo = $state(false);
+	let canRedo = $state(false);
+
+	function updateHistoryState() {
+		canUndo = activeId !== null && (undoStacks.get(activeId)?.length ?? 0) > 0;
+		canRedo = activeId !== null && (redoStacks.get(activeId)?.length ?? 0) > 0;
+	}
+
+	function snapshot() {
+		if (!activeId || !active) return;
+		const stack = undoStacks.get(activeId) ?? [];
+		stack.push(JSON.parse(JSON.stringify(active)));
+		if (stack.length > MAX_HISTORY) stack.shift();
+		undoStacks.set(activeId, stack);
+		redoStacks.set(activeId, []);
+		updateHistoryState();
+	}
+
+	function undo() {
+		if (!activeId || !active) return;
+		const stack = undoStacks.get(activeId);
+		if (!stack || stack.length === 0) return;
+		const redoStack = redoStacks.get(activeId) ?? [];
+		redoStack.push(JSON.parse(JSON.stringify(active)));
+		redoStacks.set(activeId, redoStack);
+		const prev = stack.pop()!;
+		undoStacks.set(activeId, stack);
+		palettes = palettes.map((p) => (p.id === activeId ? prev : p));
+		persist();
+		updateHistoryState();
+	}
+
+	function redo() {
+		if (!activeId || !active) return;
+		const stack = redoStacks.get(activeId);
+		if (!stack || stack.length === 0) return;
+		const undoStack = undoStacks.get(activeId) ?? [];
+		undoStack.push(JSON.parse(JSON.stringify(active)));
+		undoStacks.set(activeId, undoStack);
+		const next = stack.pop()!;
+		redoStacks.set(activeId, stack);
+		palettes = palettes.map((p) => (p.id === activeId ? next : p));
+		persist();
+		updateHistoryState();
+	}
+
 	function persist() {
 		localStorage.setItem(STORAGE_KEY, JSON.stringify(palettes));
 		if (activeId) localStorage.setItem(ACTIVE_KEY, activeId);
@@ -134,6 +185,7 @@ function createStore() {
 		if (palettes.find((p) => p.id === id)) {
 			activeId = id;
 			persist();
+			updateHistoryState();
 		}
 	}
 
@@ -178,6 +230,15 @@ function createStore() {
 		get active(): Palette | null {
 			return active;
 		},
+		get canUndo() {
+			return canUndo;
+		},
+		get canRedo() {
+			return canRedo;
+		},
+		snapshot,
+		undo,
+		redo,
 		create,
 		duplicate,
 		remove,

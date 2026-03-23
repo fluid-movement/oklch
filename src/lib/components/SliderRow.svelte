@@ -9,9 +9,10 @@
 		boundary?: number;
 		p3Boundary?: number;
 		onChange: (v: number) => void;
+		onDragStart?: () => void;
 	}
 
-	let { label, value, min, max, step, gradient, boundary, p3Boundary, onChange }: Props = $props();
+	let { label, value, min, max, step, gradient, boundary, p3Boundary, onChange, onDragStart }: Props = $props();
 </script>
 
 <div class="slider-row">
@@ -27,6 +28,7 @@
 			{step}
 			{value}
 			style="--track-gradient: {gradient}"
+			onpointerdown={() => onDragStart?.()}
 			oninput={(e) => onChange(parseFloat((e.target as HTMLInputElement).value))}
 		/>
 		{#if boundary !== undefined}
